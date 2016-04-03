@@ -1,5 +1,5 @@
 # utils
 
-git clone https://github.com/solkins/utils.git
+git clone https://github.com/solkins/workspace.git
 
 
