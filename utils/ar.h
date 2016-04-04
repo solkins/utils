@@ -6,20 +6,40 @@ class ar
 public:
     ar(void* buf):m_buf((char*)buf),m_in(0), m_out(0) {}
 
+    ar& read(void* data, int len)
+    {
+        memcpy(data, m_buf+m_out, len);
+        m_out += len;
+        return *this;
+    }
+
+    ar& write(const void* data, int len)
+    {
+        memcpy(m_buf+m_in, data, len);
+        m_in += len;
+        return *this;
+    }
+
+    ar& operator<<(const char* s)
+    {
+        return write(s, strlen(s)+1);
+    }
+
+    ar& operator>>(char* s)
+    {
+        return read(s, strlen(m_buf+m_out)+1);
+    }
+
     template<typename T>
     ar& operator<<(T v)
     {
-        memcpy(m_buf+m_in, &v, sizeof(v));
-        m_in += sizeof(v);
-        return * this;
+        return write(&v, sizeof(v));
     }
 
     template<typename T>
     ar& operator>>(T& v)
     {
-        memcpy(&v, m_buf+m_out, sizeof(v));
-        m_out += sizeof(v);
-        return * this;
+        return read(&v, sizeof(v));
     }
 
 private:
