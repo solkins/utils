@@ -1,79 +1,75 @@
-#ifndef _POOL_H
-#define	_POOL_H
+#ifndef POOL_H
+#define	POOL_H
 
 #include <queue>
-#include <list>
-#include <algorithm>
-#include "thread.h"
+#include <mutex>
 
 template<typename T>
 class pool
 {
 public:
-
-    pool(int size) : m_semaphore(0, size)
+    class ptr
     {
-        objsize = 0;
-    };
+        friend class pool;
+    private:
+        ptr(pool<T>* p, T* t) : _pool(p), _ptr(t) {}
 
-    ~pool()
-    {
-    };
+    public:
+        ~ptr()
+        {
+            std::lock_guard<std::mutex> ul(_pool->_mtx);
+            _pool->idles.push(_ptr);
+        }
 
-public:
+        T* operator->()
+        {
+            return _ptr;
+        }
 
-    void add(T* obj)
-    {
-        m_mutex.lock();
-        idleobjs.push(obj);
-        m_mutex.unlock();
-        m_semaphore.unlock();
-        ++objsize;
-    };
-
-    T* remove()
-    {
-        m_semaphore.lock();
-        m_mutex.lock();
-        T* obj = idleobjs.front();
-        idleobjs.pop();
-        m_mutex.unlock();
-        --objsize;
-        return obj;
-    };
-
-    int size()
-    {
-        return objsize;
-    };
-
-    T* getobj()
-    {
-        m_semaphore.lock();
-        m_mutex.lock();
-        T* obj = idleobjs.front();
-        idleobjs.pop();
-        runningobjs.push_back(obj);
-        m_mutex.unlock();
-        return obj;
-    };
-
-    void releaseobj(T* obj)
-    {
-        m_mutex.lock();
-        runningobjs.erase(std::find(runningobjs.begin(), runningobjs.end(), obj));
-        idleobjs.push(obj);
-        m_mutex.unlock();
-        m_semaphore.unlock();
+    private:
+        pool<T>* _pool;
+        T* _ptr;
     };
 
 private:
-    int objsize;
-    std::queue<T*> idleobjs;
-    std::list<T*> runningobjs;
-    semaphore m_semaphore;
-    mutex m_mutex;
+    pool(){}
+
+    ~pool()
+    {
+        while (!idles.empty())
+        {
+            T* it = idles.front();
+            idles.pop();
+            delete it;
+        }
+    }
+
+public:
+    static pool& instance()
+    {
+        static pool p;
+        return p;
+    }
+
+    template<typename... A>
+    void init(int size, A&&... a)
+    {
+        for (int i = 0; i < size; ++i)
+            idles.push(new T(a...));
+    }
+
+    ptr get()
+    {
+        std::lock_guard<std::mutex> ul(_mtx);
+        T* it = idles.front();
+        idles.pop();
+        return ptr(this, it);
+    }
+
+private:
+    std::queue<T*> idles;
+    std::mutex _mtx;
 };
 
-#endif	/* _POOL_H */
+#endif	/* POOL_H */
 
