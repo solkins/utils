@@ -1,123 +1,84 @@
 #include "prop.h"
+#include <string.h>
+#include <fstream>
 
 prop::prop( const char* filename )
 {
-	state = false;
-	name = filename;
-	parse();
+    parse(filename);
 }
 
 prop::~prop()
 {
 }
 
-const char* prop::getstring( const char* key, const char* default/*=""*/ ) const
+const char* prop::getstring( const char* key, const char* dvalue) const
 {
-	if (!isKeyExists(key))
-		return default;
-	std::map<std::string, std::string>::const_iterator it = propmap.find(key);
-	if (it == propmap.end())
-		return default;
+    auto it = propmap.find(key);
+    if (it == propmap.end())
+        return dvalue;
 	return it->second.c_str();
 }
 
-int prop::getint( const char* key, int default /*= 0*/ ) const
+int prop::getint( const char* key, int dvalue) const
 {
-	if (!isKeyExists(key))
-		return default;
+    if (!haskey(key))
+        return dvalue;
 	const char* s = getstring(key);
-	return s ? atoi(s) : 0;
+    return s ? atoi(s) : dvalue;
 }
 
-double prop::getdouble( const char* key, double default /*= 0.0*/ ) const
+double prop::getdouble( const char* key, double dvalue) const
 {
-	if (!isKeyExists(key))
-		return default;
+    if (!haskey(key))
+        return dvalue;
 	const char* s = getstring(key);
-	return s ? atof(s) : 0;
+    return s ? atof(s) : dvalue;
 }
 
-void prop::parse()
+void prop::parse(const char* filename)
 {
-	FILE* pfile;
-	fopen_s(&pfile, name.c_str(), "r");
-	if (!pfile)
-		return;
-
-	while (fgets(line, 1023, pfile))
-		parseline(line);
-	fclose(pfile);
-	state = true;
+    std::ifstream in(filename);
+    if (in.is_open())
+    {
+        char line[1024];
+        while (!in.eof())
+        {
+            in.getline(line, 1023);
+            parseline(line);
+        }
+    }
 }
 
 void prop::parseline(char* line)
 {
-	trimright(line);
-	while (1)
-	{
-		switch (*line)
-		{
-		case ' ':
-		case '\t':
-		case '\r':
-		case '\n':
-			++line;
-			continue;
-		case '#':
-		case ';':
-		case 0:
-			return;
-		}
-		char* pos = strchr(line, '=');
-		strncpy(key, line, pos - line);
-		key[pos-line] = 0;
-		trimright(key);
-		propmap[key] = trimleft(pos+1);
-		return;
-	}
+    std::string l(line);
+    trim(l);
+    if (l.empty())
+        return;
+
+    char c = l[0];
+    if (c == '#' || c == ';')
+        return;
+
+    size_t pos = l.find_first_of('=');
+    std::string key = l.substr(0, pos);
+    l = l.substr(pos + 1);
+    trim(key);
+    trim(l);
+    propmap[key] = l;
 }
 
-char* prop::trimleft( char* str )
+void prop::trim(std::string& text)
 {
-	while (1)
-	{
-		switch (*str)
-		{
-		case ' ':
-		case '\t':
-		case '\r':
-		case '\n':
-			++str;
-			continue;
-		default:
-			return str;
-		}
-	}
+    if(!text.empty())
+    {
+        text.erase(0, text.find_first_not_of(" \n\r\t"));
+        text.erase(text.find_last_not_of(" \n\r\t") + 1);
+    }
 }
 
-void prop::trimright( char* str )
+bool prop::haskey( const char* key ) const
 {
-	int len = strlen(str);
-	while (len)
-	{
-		switch (str[len-1])
-		{
-		case ' ':
-		case '\t':
-		case '\r':
-		case '\n':
-			--len;
-			continue;
-		default:
-			str[len] = 0;
-			return;
-		}
-	}
-}
-
-bool prop::isKeyExists( const char* key ) const
-{
-	std::map<std::string, std::string>::const_iterator it = propmap.find(key);
-	return (it != propmap.end());
+    return (propmap.find(key) != propmap.end());
 }
 

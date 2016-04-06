@@ -3,7 +3,14 @@ TEMPLATE = app
 QT += qml quick
 CONFIG += c++11
 
-SOURCES += main.cpp
+INCLUDEPATH += ../utils
+
+LIBS += -lws2_32
+
+SOURCES += main.cpp \
+    ../utils/svr_epoll.cpp \
+    ../utils/prop.cpp \
+    ../utils/socket.cpp
 
 RESOURCES += qml.qrc
 
@@ -12,3 +19,15 @@ QML_IMPORT_PATH =
 
 # Default rules for deployment.
 include(deployment.pri)
+
+HEADERS += \
+    ../utils/singleton.h \
+    ../utils/sysinfo.h \
+    ../utils/threadpool.h \
+    ../utils/svr_epoll.h \
+    ../utils/pool.h \
+    ../utils/dl.h \
+    ../utils/ar.h \
+    ../utils/prop.h \
+    ../utils/ring.h \
+    ../utils/socket.h
