@@ -37,6 +37,7 @@ public:
     int setsockopt(int level, int optname, const void *optval, socklen_t optlen);
     bool bind(unsigned short port, unsigned long address = INADDR_ANY);
     void close();
+    int detach();
     bool canread(int ms);
     bool canwrite(int ms);
 

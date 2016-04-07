@@ -77,6 +77,13 @@ void socket::close()
     m_sock = INVALID_SOCKET;
 }
 
+int socket::detach()
+{
+    int sock = m_sock;
+    m_sock = INVALID_SOCKET;
+    return sock;
+}
+
 bool socket::canread(int ms)
 {
     timeval timeout;
