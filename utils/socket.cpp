@@ -1,4 +1,6 @@
 #include "socket.h"
+#include <cctype>
+#include <memory.h>
 
 #ifdef WIN32
 class netenv
@@ -19,46 +21,46 @@ private:
 };
 #endif
 
-socket socket::attach(int sock)
+syssocket syssocket::attach(int sock)
 {
-    socket s;
+    syssocket s;
     s.m_sock = sock;
     return s;
 }
 
-unsigned long socket::address2ulong(const char* address)
+unsigned long syssocket::address2ulong(const char* address)
 {
     if (isdigit(address[0]))
         return inet_addr(address);
 
     struct hostent *hp;
     if ((hp = gethostbyname(address)) == NULL)
-        return NULL;
+        return INVALID_SOCKET;
 
     return ((in_addr*)hp->h_addr)->s_addr;
 }
 
-socket::socket(int type)
+syssocket::syssocket(int type)
 {
     m_sock = ::socket(AF_INET, type, 0);
 }
 
-socket::~socket()
+syssocket::~syssocket()
 {
     close();
 }
 
-int socket::getsockopt(int level, int optname, void *optval, socklen_t *optlen)
+int syssocket::getsockopt(int level, int optname, void *optval, socklen_t *optlen)
 {
     return ::getsockopt(m_sock, level, optname, (char*)optval, optlen);
 }
 
-int socket::setsockopt(int level, int optname, const void *optval, socklen_t optlen)
+int syssocket::setsockopt(int level, int optname, const void *optval, socklen_t optlen)
 {
     return ::setsockopt(m_sock, level, optname, (const char*)optval, optlen);
 }
 
-bool socket::bind(unsigned short port, unsigned long address)
+bool syssocket::bind(unsigned short port, unsigned long address)
 {
     sockaddr_in addr;
     memset(&addr, 0, sizeof (sockaddr_in));
@@ -70,21 +72,21 @@ bool socket::bind(unsigned short port, unsigned long address)
     return ::bind(m_sock, (const sockaddr*)&addr, len) != SOCKET_ERROR;
 }
 
-void socket::close()
+void syssocket::close()
 {
     if (m_sock != INVALID_SOCKET)
         ::closesocket(m_sock);
     m_sock = INVALID_SOCKET;
 }
 
-int socket::detach()
+int syssocket::detach()
 {
     int sock = m_sock;
     m_sock = INVALID_SOCKET;
     return sock;
 }
 
-bool socket::canread(int ms)
+bool syssocket::canread(int ms)
 {
     timeval timeout;
     timeout.tv_sec = 0;
@@ -95,7 +97,7 @@ bool socket::canread(int ms)
     return ::select(m_sock + 1, &read, NULL, NULL, &timeout) > 0;
 }
 
-bool socket::canwrite(int ms)
+bool syssocket::canwrite(int ms)
 {
     timeval timeout;
     timeout.tv_sec = 0;
@@ -106,18 +108,18 @@ bool socket::canwrite(int ms)
     return ::select(m_sock + 1, NULL, &write, NULL, &timeout) != 0;
 }
 
-bool socket::listen(int n)
+bool syssocket::listen(int n)
 {
     return ::listen(m_sock, n) != SOCKET_ERROR;
 }
 
-int socket::accept(sockaddr_in* addr)
+int syssocket::accept(sockaddr_in* addr)
 {
     socklen_t addrlen = sizeof (sockaddr_in);
     return ::accept(m_sock, (sockaddr*) & addr, &addrlen);
 }
 
-bool socket::connect(unsigned short port, unsigned long address)
+bool syssocket::connect(unsigned short port, unsigned long address)
 {
     sockaddr_in addr;
     memset(&addr, 0, sizeof (sockaddr_in));
@@ -129,17 +131,17 @@ bool socket::connect(unsigned short port, unsigned long address)
     return ::connect(m_sock, (const sockaddr*)&addr, len) != SOCKET_ERROR;
 }
 
-int socket::send(const void* buf, size_t len)
+int syssocket::send(const void* buf, size_t len)
 {
     return ::send(m_sock, (const char*)buf, len, 0);
 }
 
-int socket::recv(void* buf, size_t len)
+int syssocket::recv(void* buf, size_t len)
 {
     return ::recv(m_sock, (char*)buf, len, 0);
 }
 
-bool socket::joingroup(const char* groupip)
+bool syssocket::joingroup(const char* groupip)
 {
     unsigned char ttl=255;
     if (setsockopt(IPPROTO_IP, 10/*IP_MULTICAST_TTL*/, &ttl, sizeof(ttl)) == SOCKET_ERROR)
@@ -157,7 +159,7 @@ bool socket::joingroup(const char* groupip)
     return true;
 }
 
-int socket::sendto(const void* buf, size_t len, unsigned short port, unsigned long address)
+int syssocket::sendto(const void* buf, size_t len, unsigned short port, unsigned long address)
 {
     sockaddr_in addr;
     memset(&addr, 0, sizeof (sockaddr_in));
@@ -169,7 +171,7 @@ int socket::sendto(const void* buf, size_t len, unsigned short port, unsigned lo
     return ::sendto(m_sock, (const char*)buf, len, 0, (const sockaddr*) &addr, addrlen);
 }
 
-int socket::recvfrom(void* buf, size_t len, sockaddr_in* addr)
+int syssocket::recvfrom(void* buf, size_t len, sockaddr_in* addr)
 {
     socklen_t addrlen = sizeof (sockaddr_in);
     return ::recvfrom(m_sock, (char*)buf, len, 0, (sockaddr*) addr, &addrlen);

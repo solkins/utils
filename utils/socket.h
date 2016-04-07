@@ -22,14 +22,14 @@ typedef int socklen_t;
 #define GetLastError()      errno
 #endif
 
-class socket
+class syssocket
 {
 public:
     // SOCK_STREAM or SOCK_DGRAM
-    socket(int type);
-    ~socket();
+    syssocket(int type);
+    ~syssocket();
 
-    static socket attach(int sock);
+    static class syssocket attach(int sock);
     static unsigned long address2ulong(const char* address);
 
     // socket
@@ -38,8 +38,8 @@ public:
     bool bind(unsigned short port, unsigned long address = INADDR_ANY);
     void close();
     int detach();
-    bool canread(int ms);
-    bool canwrite(int ms);
+    bool canread(int ms = 10);
+    bool canwrite(int ms = 10);
 
     // tcp
     bool listen(int n = 5);
