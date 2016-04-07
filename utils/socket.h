@@ -29,6 +29,7 @@ public:
     socket(int type);
     ~socket();
 
+    static socket attach(int sock);
     static unsigned long address2ulong(const char* address);
 
     // socket

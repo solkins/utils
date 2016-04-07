@@ -19,6 +19,13 @@ private:
 };
 #endif
 
+socket socket::attach(int sock)
+{
+    socket s;
+    s.m_sock = sock;
+    return s;
+}
+
 unsigned long socket::address2ulong(const char* address)
 {
     if (isdigit(address[0]))
