@@ -17,6 +17,10 @@ public:
 
     void start();
     void stop();
+    void bind_server_cb(std::function<int(int, const char*, int, char*, int)> f)
+    {
+        server_cb = f;
+    }
 
 private:
     void epollproc();
@@ -28,7 +32,7 @@ private:
     int m_efd;
     int m_sock;
     unsigned short m_port;
-    std::function<int(int, const char*, int, char*, int)> requesthandler;
+    std::function<int(int, const char*, int, char*, int)> server_cb;
 };
 
 #endif // SVR_EPOLL_H

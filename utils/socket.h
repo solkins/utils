@@ -22,14 +22,14 @@ typedef int socklen_t;
 #define GetLastError()      errno
 #endif
 
-class syssocket
+class sys_sock
 {
 public:
     // SOCK_STREAM or SOCK_DGRAM
-    syssocket(int type);
-    ~syssocket();
+    sys_sock(int type);
+    ~sys_sock();
 
-    static class syssocket attach(int sock);
+    static class sys_sock attach(int sock);
     static unsigned long address2ulong(const char* address);
 
     // socket
@@ -52,6 +52,9 @@ public:
     bool joingroup(const char* groupip);
     int sendto(const void* buf, size_t len, unsigned short port, unsigned long address);
     int recvfrom(void* buf, size_t len, sockaddr_in* addr);
+
+private:
+    sys_sock(){}
 
 private:
     int m_sock;

@@ -10,7 +10,8 @@ LIBS += -lws2_32
 SOURCES += main.cpp \
     ../utils/svr_epoll.cpp \
     ../utils/prop.cpp \
-    ../utils/socket.cpp
+    ../utils/socket.cpp \
+    ../utils/test.cpp
 
 RESOURCES += qml.qrc
 

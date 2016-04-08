@@ -26,7 +26,7 @@ svr_epoll::~svr_epoll()
 void svr_epoll::start()
 {
     int flag = 1;
-    syssocket s(SOCK_STREAM);
+    sys_sock s(SOCK_STREAM);
     s.setsockopt(SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int));
 
     if (!s.bind(m_port) || !s.listen())
@@ -41,7 +41,7 @@ void svr_epoll::start()
     ev.data.fd = m_sock;
     epoll_ctl(m_efd, EPOLL_CTL_ADD, m_sock, &ev);
 
-    std::thread(std::bind(&epollsvr::epollproc, this)).detach();
+    std::thread(std::bind(&svr_epoll::epollproc, this)).detach();
 }
 
 void svr_epoll::stop()
@@ -58,7 +58,7 @@ void svr_epoll::epollproc()
         for(int i = 0; i < iCnt; ++i)
         {
             int fd = events[i].data.fd;
-            threadpoolrun(&epollsvr::handlerequest, this, fd);
+            threadpoolrun(&svr_epoll::handlerequest, this, fd);
         }
     }
 }
@@ -71,7 +71,7 @@ void svr_epoll::handlerequest(int fd)
         return;
     }
 
-    syssocket s = syssocket::attach(fd);
+    sys_sock s = sys_sock::attach(fd);
     char buf[8192];
     int len = s.recv(buf, 8192);
     if (len <= 0)
@@ -84,16 +84,16 @@ void svr_epoll::handlerequest(int fd)
     }
 
     int resplen = 0;
-    if (requesthandler)
-        resplen = requesthandler(fd, buf, len, buf, 8192);
+    if (server_cb)
+        resplen = server_cb(fd, buf, len, buf, 8192);
     if (resplen > 0)
-        c.send(buf, resplen);
+        s.send(buf, resplen);
     s.detach();
 }
 
 void svr_epoll::onnewconnection()
 {
-    syssocket s = syssocket::attach(m_sock);
+    sys_sock s = sys_sock::attach(m_sock);
     while (s.canread())
     {
         sockaddr_in addr;
