@@ -20,6 +20,7 @@ svr_epoll::svr_epoll()
 
 svr_epoll::~svr_epoll()
 {
+    stop();
     close(m_efd);
 }
 
