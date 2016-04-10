@@ -7,7 +7,38 @@
 
 #define MAXEPOLLSIZE    10000
 
-svr_epoll::svr_epoll()
+class svr_epoll_imp
+{
+public:
+    svr_epoll_imp();
+    ~svr_epoll_imp();
+
+    void setport(unsigned short port)
+    {
+        m_port = port;
+    }
+
+    void start();
+    void stop();
+    void bind_server_cb(std::function<int(int, const char*, int, char*, int)> f)
+    {
+        server_cb = f;
+    }
+
+private:
+    void epollproc();
+    void handlerequest(int fd);
+    void onnewconnection();
+
+private:
+    std::atomic<bool> running;
+    int m_efd;
+    int m_sock;
+    unsigned short m_port;
+    std::function<int(int, const char*, int, char*, int)> server_cb;
+};
+
+svr_epoll_imp::svr_epoll_imp()
 {
     struct rlimit rt;
     rt.rlim_max = rt.rlim_cur = MAXEPOLLSIZE;
@@ -18,13 +49,13 @@ svr_epoll::svr_epoll()
     m_port = 0;
 }
 
-svr_epoll::~svr_epoll()
+svr_epoll_imp::~svr_epoll_imp()
 {
     stop();
     close(m_efd);
 }
 
-void svr_epoll::start()
+void svr_epoll_imp::start()
 {
     int flag = 1;
     sys_sock s(SOCK_STREAM);
@@ -42,15 +73,15 @@ void svr_epoll::start()
     ev.data.fd = m_sock;
     epoll_ctl(m_efd, EPOLL_CTL_ADD, m_sock, &ev);
 
-    std::thread(std::bind(&svr_epoll::epollproc, this)).detach();
+    std::thread(std::bind(&svr_epoll_imp::epollproc, this)).detach();
 }
 
-void svr_epoll::stop()
+void svr_epoll_imp::stop()
 {
     running = false;
 }
 
-void svr_epoll::epollproc()
+void svr_epoll_imp::epollproc()
 {
     struct epoll_event events[MAXEPOLLSIZE];
     while (running)
@@ -59,12 +90,12 @@ void svr_epoll::epollproc()
         for(int i = 0; i < iCnt; ++i)
         {
             int fd = events[i].data.fd;
-            threadpoolrun(&svr_epoll::handlerequest, this, fd);
+            threadpoolrun(&svr_epoll_imp::handlerequest, this, fd);
         }
     }
 }
 
-void svr_epoll::handlerequest(int fd)
+void svr_epoll_imp::handlerequest(int fd)
 {
     if (fd == m_sock)
     {
@@ -92,7 +123,7 @@ void svr_epoll::handlerequest(int fd)
     s.detach();
 }
 
-void svr_epoll::onnewconnection()
+void svr_epoll_imp::onnewconnection()
 {
     sys_sock s = sys_sock::attach(m_sock);
     while (s.canread())
@@ -112,4 +143,34 @@ void svr_epoll::onnewconnection()
         }
     }
     s.detach();
+}
+
+svr_epoll::svr_epoll()
+{
+    _imp = new svr_epoll_imp();
+}
+
+svr_epoll::~svr_epoll()
+{
+    delete _imp;
+}
+
+void svr_epoll::setport(unsigned short port)
+{
+    _imp->setport(port);
+}
+
+void svr_epoll::bind_server_cb(std::function<int(int, const char*, int, char*, int)> f)
+{
+    _imp->bind_server_cb(f);
+}
+
+void svr_epoll::start()
+{
+    _imp->start();
+}
+
+void svr_epoll::stop()
+{
+    _imp->stop();
 }
