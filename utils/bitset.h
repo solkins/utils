@@ -3,12 +3,9 @@
 
 #include <string>
 
-typedef unsigned char   uint8;
-
 class bitset
 {
 public:
-    bitset();
     bitset(size_t size = 0);
     bitset(const bitset& orig);
     ~bitset();
@@ -32,7 +29,7 @@ private:
     size_t m_count;
     size_t m_total;
     size_t m_size;
-    uint8* m_data;
+    unsigned char* m_data;
 };
 
 #endif	/* _BITSET_H */

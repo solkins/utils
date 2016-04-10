@@ -1,11 +1,6 @@
 #include "bitset.h"
 #include <string.h>
 
-bitset::bitset()
-{
-    m_data = NULL;
-}
-
 bitset::bitset(size_t size)
 {
     m_data = NULL;
@@ -19,7 +14,7 @@ bitset::bitset(const bitset& orig)
     m_total = orig.m_total;
     m_size = orig.m_size;
     if (m_size)
-        m_data = new uint8[m_size];
+        m_data = new unsigned char[m_size];
     memcpy(m_data, orig.m_data, m_size);
 }
 
@@ -40,7 +35,7 @@ void bitset::setsize(size_t count)
     m_size = ((m_total + 7) & (~7)) >> 3;
     if (m_size)
     {
-        m_data = new uint8[m_size];
+        m_data = new unsigned char[m_size];
         memset(m_data, 0, m_size);
     }
 }
@@ -53,48 +48,21 @@ size_t bitset::size() const
 bool bitset::any() const
 {
     return m_count > 0;
-//    for (size_t i = 0; i < m_size; ++i)
-//    {
-//        if (m_data[i])
-//            return true;
-//    }
-//    return false;
 }
 
 bool bitset::all() const
 {
     return m_count == m_total;
-//    for (size_t i = 0; i < m_size-1; ++i)
-//    {
-//        if (m_data[i] != ~0)
-//            return false;
-//    }
-//    return m_data[m_size-1] == ((((uint8)~0) >> ((m_size << 3) - m_total)));
 }
 
 size_t bitset::count() const
 {
     return m_count;
-//    size_t count = 0;
-//    uint8 d;
-//    for (size_t i = 0; i < m_size; ++i)
-//    {
-//        if (d & 1)  ++count;
-//        if (d & 2)  ++count;
-//        if (d & 4)  ++count;
-//        if (d & 8)  ++count;
-//        if (d & 16)  ++count;
-//        if (d & 32)  ++count;
-//        if (d & 64)  ++count;
-//        if (d & 128)  ++count;
-//    }
-//    return count;
 }
 
 bool bitset::none() const
 {
     return m_count == 0;
-//    return !any();
 }
 
 void bitset::flip()
@@ -102,6 +70,7 @@ void bitset::flip()
     for (size_t i = 0; i < m_size; ++i)
         m_data[i] = ~m_data[i];
     m_data[m_size - 1] &= (~0) >> ((m_size >> 3) - m_total);
+    m_count = m_total - m_count;
 }
 
 void bitset::set(size_t pos, bool val)
@@ -135,15 +104,15 @@ size_t bitset::first(bool val) const
             break;
     }
     size_t pos = (i << 3);
-    uint8 d = m_data[i];
-    if ((d & 1) == val)  return pos;
-    if ((d & 2) == val)  return pos+1;
-    if ((d & 4) == val)  return pos+2;
-    if ((d & 8) == val)  return pos+3;
-    if ((d & 16) == val)  return pos+4;
-    if ((d & 32) == val)  return pos+5;
-    if ((d & 64) == val)  return pos+6;
-    if ((d & 128) == val)  return pos+7;
+    unsigned char d = m_data[i];
+    if (((d & 1) == 1) == val)  return pos;
+    if (((d & 2) == 2) == val)  return pos+1;
+    if (((d & 4) == 4) == val)  return pos+2;
+    if (((d & 8) == 8) == val)  return pos+3;
+    if (((d & 16) == 16) == val)  return pos+4;
+    if (((d & 32) == 32) == val)  return pos+5;
+    if (((d & 64) == 64) == val)  return pos+6;
+    if (((d & 128) == 128) == val)  return pos+7;
     return ~0;
 }
 
