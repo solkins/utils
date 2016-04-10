@@ -17,8 +17,8 @@ public:
 
 private:
     WSADATA wsadata;
-    static netenv g_env;
 };
+static netenv g_env;
 #endif
 
 sys_sock sys_sock::attach(int sock)
