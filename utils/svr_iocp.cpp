@@ -9,7 +9,7 @@
 #define RECV 1
 #define ACCEPT 2
 
-#define DATA_LENGTH 1000
+#define DATA_LENGTH 8192
 
 typedef struct _PER_HANDLE_DATA
 {
@@ -54,6 +54,7 @@ private:
     std::function<int(int, const char*, int, char*, int)> server_cb;
 
     friend int HandleListen(unsigned short port, void* app);
+    friend void ServerThread(HANDLE CompletionPort, void* app);
     friend void HandleRecv(DWORD bytes, LPPER_HANDLE_DATA perHandleData, LPPER_IO_DATA perIoData);
 };
 
@@ -152,12 +153,13 @@ void HandleClose(LPPER_HANDLE_DATA perHandleData, LPPER_IO_DATA perIoData)
     GlobalFree(perIoData);
 }
 
-void ServerThread(HANDLE CompletionPort)
+void ServerThread(HANDLE CompletionPort, void* app)
 {
+    svr_iocp_imp* _this = (svr_iocp_imp*)app;
      DWORD bytes;
      LPPER_HANDLE_DATA perHandleData = NULL;
      LPPER_IO_DATA perIoData;
-     while(true)
+     while(_this->running)
      {
          bytes = -1;
          GetQueuedCompletionStatus(
@@ -198,20 +200,26 @@ svr_iocp_imp::svr_iocp_imp()
 
 svr_iocp_imp::~svr_iocp_imp()
 {
+    stop();
     CloseHandle(m_hiocp);
 }
 
 void svr_iocp_imp::start()
 {
-    for(int i=0; i<cpu_count(); i++)
-        std::thread(ServerThread,m_hiocp).detach();
-
     m_sock = HandleListen(m_port, this);
+
+    if (m_sock != INVALID_SOCKET)
+    {
+        running = true;
+        for(int i=0; i<cpu_count(); i++)
+            std::thread(ServerThread,m_hiocp, this).detach();
+    }
 }
 
 void svr_iocp_imp::stop()
 {
-
+    running = false;
+    closesocket(m_sock);
 }
 
 svr_iocp::svr_iocp()

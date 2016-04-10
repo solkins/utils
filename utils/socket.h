@@ -51,6 +51,7 @@ public:
     // udp
     bool joingroup(const char* groupip);
     int sendto(const void* buf, size_t len, unsigned short port, unsigned long address);
+    int sendto(const void* buf, size_t len, sockaddr_in* addr);
     int recvfrom(void* buf, size_t len, sockaddr_in* addr);
 
 private:

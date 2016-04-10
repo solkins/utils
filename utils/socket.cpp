@@ -167,8 +167,13 @@ int sys_sock::sendto(const void* buf, size_t len, unsigned short port, unsigned 
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = address;
 
+    return sendto(buf, len, &addr);
+}
+
+int sys_sock::sendto(const void *buf, size_t len, sockaddr_in *addr)
+{
     socklen_t addrlen = sizeof (sockaddr_in);
-    return ::sendto(m_sock, (const char*)buf, len, 0, (const sockaddr*) &addr, addrlen);
+    return ::sendto(m_sock, (const char*)buf, len, 0, (const sockaddr*) addr, addrlen);
 }
 
 int sys_sock::recvfrom(void* buf, size_t len, sockaddr_in* addr)

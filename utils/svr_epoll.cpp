@@ -6,6 +6,7 @@
 #include "threadpool.h"
 
 #define MAXEPOLLSIZE    10000
+#define DATA_LENGTH 8192
 
 class svr_epoll_imp
 {
@@ -79,6 +80,7 @@ void svr_epoll_imp::start()
 void svr_epoll_imp::stop()
 {
     running = false;
+    closesocket(m_sock);
 }
 
 void svr_epoll_imp::epollproc()
@@ -104,8 +106,8 @@ void svr_epoll_imp::handlerequest(int fd)
     }
 
     sys_sock s = sys_sock::attach(fd);
-    char buf[8192];
-    int len = s.recv(buf, 8192);
+    char buf[DATA_LENGTH];
+    int len = s.recv(buf, DATA_LENGTH);
     if (len <= 0)
     {
         struct epoll_event ev;
@@ -117,7 +119,7 @@ void svr_epoll_imp::handlerequest(int fd)
 
     int resplen = 0;
     if (server_cb)
-        resplen = server_cb(fd, buf, len, buf, 8192);
+        resplen = server_cb(fd, buf, len, buf, DATA_LENGTH);
     if (resplen > 0)
         s.send(buf, resplen);
     s.detach();
