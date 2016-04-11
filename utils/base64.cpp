@@ -81,7 +81,8 @@ void base64encoder::write(const void* buf, int len)
         {
             encode(remain, dest);
             remainlen = 0;
-//            filter::write(dest, 4);
+            if (_out)
+                _out(dest, 4);
         }
     }
 }
@@ -95,8 +96,14 @@ void base64encoder::end()
         encode(remain, dest);
         memset(dest + remainlen + 1, '=', 3 - remainlen);
         remainlen = 0;
-//        filter::write(dest, 4);
+        if (_out)
+            _out(dest, 4);
     }
+}
+
+void base64encoder::bind_output(std::function<void (const void *, int)> f)
+{
+    _out = f;
 }
 
 base64decoder::base64decoder()
@@ -114,7 +121,7 @@ void base64decoder::write(const void* buf, int len)
     unsigned char dest[3];
     while (offset < len)
     {
-        memcpy(remain + remainlen, ((unsigned char*) buf) + offset++, 1);
+        remain[remainlen] = ((unsigned char*) buf)[offset++];
         if (is_base64(remain[remainlen]))
             ++remainlen;
         else
@@ -124,7 +131,8 @@ void base64decoder::write(const void* buf, int len)
         {
             decode(remain, dest);
             remainlen = 0;
-//            filter::write(dest, 3);
+            if (_out)
+                _out(dest, 3);
         }
     }
 }
@@ -136,7 +144,13 @@ void base64decoder::end()
         unsigned char dest[3];
         memset(remain + remainlen, '0', 4 - remainlen);
         decode(remain, dest);
-//        filter::write(dest, remainlen - 1);
         remainlen = 0;
+        if (_out)
+            _out(dest, remainlen - 1);
     }
+}
+
+void base64decoder::bind_output(std::function<void (const void *, int)> f)
+{
+    _out = f;
 }

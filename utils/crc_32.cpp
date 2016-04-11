@@ -89,9 +89,11 @@ void crc32::write(const void* buf, int len)
 
 void crc32::end()
 {
-    unsigned char* data = (unsigned char*) & crc;
-//    filter::write(data + 3, 1);
-//    filter::write(data + 2, 1);
-//    filter::write(data + 1, 1);
-//    filter::write(data, 1);
+}
+
+std::string crc32::result()
+{
+    char buf[10];
+    sprintf(buf, "%02X%02X%02X%02X", ((crc>>24) & 0XFF), ((crc>>16) & 0XFF), ((crc>>8) & 0XFF), (crc & 0XFF));
+    return buf;
 }

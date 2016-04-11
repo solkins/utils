@@ -184,13 +184,21 @@ void sha1::end()
         SHA1PadMessage();
         Computed = 1;
     }
+}
 
+std::string sha1::result()
+{
+    char buf[42] = "";
     unsigned char* head = (unsigned char*) Message_Digest;
-    for (int i = 3; i < 20; i += 4)
-    {
-//        filter::write(head + i, 1);
-//        filter::write(head + i - 1, 1);
-//        filter::write(head + i - 2, 1);
-//        filter::write(head + i - 3, 1);
-    }
+    sprintf(buf, "%02X%02X%02X%02X"
+                 "%02X%02X%02X%02X"
+                 "%02X%02X%02X%02X"
+                 "%02X%02X%02X%02X"
+                 "%02X%02X%02X%02X",
+            head[3], head[2], head[1], head[0],
+            head[7], head[6], head[5], head[4],
+            head[11], head[10], head[9], head[8],
+            head[15], head[14], head[13], head[12],
+            head[19], head[18], head[17], head[16]);
+    return buf;
 }

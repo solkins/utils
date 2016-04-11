@@ -1,6 +1,8 @@
 #ifndef MD5_H
 #define MD5_H
 
+#include <string>
+
 class md5
 {
 public:
@@ -8,6 +10,7 @@ public:
 	void start();
 	void write(const void* buf, int len);
 	void end();
+    std::string result();
 
 private:
     unsigned int state[4];		/* state (ABCD) */

@@ -1,6 +1,8 @@
 #ifndef SHA1_H
 #define	SHA1_H
 
+#include <string>
+
 class sha1
 {
 public:
@@ -8,6 +10,7 @@ public:
 	void start();
 	void write(const void* buf, int len);
 	void end();
+    std::string result();
 
 private:
     void SHA1ProcessMessageBlock();
