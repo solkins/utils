@@ -19,12 +19,13 @@ public:
         m_port = port;
     }
 
-    void start();
-    void stop();
     void bind_server_cb(std::function<int(int, const char*, int, char*, int)> f)
-    {
+	{
         server_cb = f;
     }
+
+    void start();
+    void stop();
 
 private:
     void epollproc();
@@ -64,6 +65,8 @@ void svr_epoll_imp::start()
 
     if (!s.bind(m_port) || !s.listen())
         return;
+
+	running = true;
 
     m_sock = s.detach();
     int flags = fcntl(m_sock, F_GETFL, 0);

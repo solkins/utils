@@ -14,6 +14,9 @@ public:
 
     void start();
     void stop();
+
+private:
+	class svr_epoll_imp* _imp;
 };
 
 #endif // SVR_EPOLL_H
