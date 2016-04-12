@@ -19,8 +19,8 @@ public:
         m_port = port;
     }
 
-    void bind_server_cb(std::function<int(int, const char*, int, char*, int)> f)
-	{
+    void bind_server_cb(std::function<int(int, const char*, int, char*, int, unsigned long, unsigned short)> f)
+    {
         server_cb = f;
     }
 
@@ -37,7 +37,7 @@ private:
     int m_efd;
     int m_sock;
     unsigned short m_port;
-    std::function<int(int, const char*, int, char*, int)> server_cb;
+    std::function<int(int, const char*, int, char*, int, unsigned long, unsigned short)> server_cb;
 };
 
 svr_epoll_imp::svr_epoll_imp()
@@ -66,7 +66,7 @@ void svr_epoll_imp::start()
     if (!s.bind(m_port) || !s.listen())
         return;
 
-	running = true;
+    running = true;
 
     m_sock = s.detach();
     int flags = fcntl(m_sock, F_GETFL, 0);
@@ -118,11 +118,12 @@ void svr_epoll_imp::handlerequest(int fd)
         epoll_ctl(fd, EPOLL_CTL_DEL, fd,&ev);
 
         close(fd);
+        return;
     }
 
     int resplen = 0;
     if (server_cb)
-        resplen = server_cb(fd, buf, len, buf, DATA_LENGTH);
+        resplen = server_cb(fd, buf, len, buf, DATA_LENGTH, 0, 0);
     if (resplen > 0)
         s.send(buf, resplen);
     s.detach();
@@ -165,7 +166,7 @@ void svr_epoll::setport(unsigned short port)
     _imp->setport(port);
 }
 
-void svr_epoll::bind_server_cb(std::function<int(int, const char*, int, char*, int)> f)
+void svr_epoll::bind_server_cb(std::function<int(int, const char*, int, char*, int, unsigned long, unsigned short)> f)
 {
     _imp->bind_server_cb(f);
 }

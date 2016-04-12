@@ -10,7 +10,7 @@ public:
     ~svr_epoll();
 
     void setport(unsigned short port);
-    void bind_server_cb(std::function<int(int, const char*, int, char*, int)> f);
+    void bind_server_cb(std::function<int(int, const char*, int, char*, int, unsigned long, unsigned short)> f);
 
     void start();
     void stop();

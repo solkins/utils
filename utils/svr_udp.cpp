@@ -16,7 +16,7 @@ public:
         m_port = port;
     }
 
-    void bind_server_cb(std::function<int(int, const char*, int, char*, int)> f)
+    void bind_server_cb(std::function<int(int, const char*, int, char*, int, unsigned long, unsigned short)> f)
     {
         server_cb = f;
     }
@@ -28,7 +28,7 @@ private:
     std::atomic<bool> running;
     int m_sock;
     unsigned short m_port;
-    std::function<int(int, const char*, int, char*, int)> server_cb;
+    std::function<int(int, const char*, int, char*, int, unsigned long, unsigned short)> server_cb;
 
     friend void serverproc(void* app);
     friend void HandleRequest(svr_udp_imp* svr);
@@ -52,7 +52,7 @@ void HandleRequest(svr_udp_imp* svr)
     {
         if (svr->server_cb)
         {
-            sendlen = svr->server_cb(svr->m_sock, item->buf, recvlen, item->buf, DATA_LENGTH);
+            sendlen = svr->server_cb(svr->m_sock, item->buf, recvlen, item->buf, DATA_LENGTH, addr.sin_addr.s_addr, ntohs(addr.sin_port));
             if (sendlen > 0)
                 s.sendto(item->buf, sendlen, &addr);
         }
@@ -115,7 +115,7 @@ void svr_udp::setport(unsigned short port)
     _imp->setport(port);
 }
 
-void svr_udp::bind_server_cb(std::function<int(int, const char*, int, char*, int)> f)
+void svr_udp::bind_server_cb(std::function<int(int, const char*, int, char*, int, unsigned long, unsigned short)> f)
 {
     _imp->bind_server_cb(f);
 }
