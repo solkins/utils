@@ -1,5 +1,6 @@
 #include "svr_iocp.h"
 #include <atomic>
+#include <deque>
 #include <thread>
 #include <mswsock.h>
 #include "socket.h"
@@ -47,6 +48,7 @@ private:
     int m_sock;
     unsigned short m_port;
     std::function<int(int, const char*, int, char*, int, unsigned long, unsigned short)> server_cb;
+    std::deque<std::thread> m_threads;
 
     friend void AcceptConnection(svr_iocp_imp* _this);
     friend void HandleListen(unsigned short port, void* app);
@@ -180,41 +182,43 @@ void HandleClose(LPPER_IO_DATA perIoData)
 void ServerThread(HANDLE CompletionPort, void* app)
 {
     svr_iocp_imp* _this = (svr_iocp_imp*)app;
-     DWORD bytes;
-     ULONG_PTR ck = 0;
-     LPPER_IO_DATA perIoData = NULL;
-     while(_this->running)
-     {
-         bytes = -1;
-         GetQueuedCompletionStatus(
-             CompletionPort,
-             &bytes,
-             (PULONG_PTR)&ck,
-             (LPOVERLAPPED*)&perIoData,
-             INFINITE);
+    DWORD bytes;
+    ULONG_PTR ck = 0;
+    LPPER_IO_DATA perIoData = NULL;
+    while(_this->running)
+    {
+        bytes = -1;
+        if (GetQueuedCompletionStatus(CompletionPort, &bytes, (PULONG_PTR)&ck,
+                                      (LPOVERLAPPED*)&perIoData, INFINITE) == FALSE)
+            continue;
 
-         if(bytes == 0 && (perIoData->operation == RECV ||
-             perIoData->operation == SEND))
-         {
-             HandleClose(perIoData);
-             continue;
-         }
-         if(perIoData->operation == ACCEPT)
-         {
-             HandleAccept(CompletionPort, perIoData);
-             continue;
-         }
-         if(perIoData->operation == SEND)
-         {
-             HandleSend(perIoData);
-             continue;
-         }
-         if(perIoData->operation == RECV)
-         {
-             HandleRecv(bytes, perIoData);
-             continue;
-         }
-     }
+        if (perIoData == NULL)
+            break;
+
+        if(perIoData->operation == ACCEPT)
+        {
+            HandleAccept(CompletionPort, perIoData);
+            continue;
+        }
+
+        if(bytes == 0)
+        {
+            HandleClose(perIoData);
+            continue;
+        }
+
+        if(perIoData->operation == SEND)
+        {
+            HandleSend(perIoData);
+            continue;
+        }
+
+        if(perIoData->operation == RECV)
+        {
+            HandleRecv(bytes, perIoData);
+            continue;
+        }
+    }
 }
 
 svr_iocp_imp::svr_iocp_imp()
@@ -236,7 +240,7 @@ void svr_iocp_imp::start()
     {
         running = true;
         for(int i=0; i<cpu_count(); i++)
-            std::thread(ServerThread,m_hiocp, this).detach();
+            m_threads.push_back(std::thread(ServerThread,m_hiocp, this));
     }
 }
 
@@ -244,6 +248,11 @@ void svr_iocp_imp::stop()
 {
     running = false;
     closesocket(m_sock);
+    for (auto& t : m_threads)
+        PostQueuedCompletionStatus(m_hiocp, 0, NULL, NULL);
+    for (auto& t : m_threads)
+        t.join();
+    m_threads.clear();
 }
 
 svr_iocp::svr_iocp()

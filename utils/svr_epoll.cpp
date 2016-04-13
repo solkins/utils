@@ -38,6 +38,8 @@ private:
     int m_sock;
     unsigned short m_port;
     std::function<int(int, const char*, int, char*, int, unsigned long, unsigned short)> server_cb;
+    std::thread epollthread;
+    threadpool thpool;
 };
 
 svr_epoll_imp::svr_epoll_imp()
@@ -77,13 +79,14 @@ void svr_epoll_imp::start()
     ev.data.fd = m_sock;
     epoll_ctl(m_efd, EPOLL_CTL_ADD, m_sock, &ev);
 
-    std::thread(std::bind(&svr_epoll_imp::epollproc, this)).detach();
+    epollthread = std::thread(&svr_epoll_imp::epollproc, this);
 }
 
 void svr_epoll_imp::stop()
 {
     running = false;
     closesocket(m_sock);
+    epollthread.join();
 }
 
 void svr_epoll_imp::epollproc()
@@ -95,7 +98,7 @@ void svr_epoll_imp::epollproc()
         for(int i = 0; i < iCnt; ++i)
         {
             int fd = events[i].data.fd;
-            threadpoolrun(&svr_epoll_imp::handlerequest, this, fd);
+            thpool.run(&svr_epoll_imp::handlerequest, this, fd);
         }
     }
 }

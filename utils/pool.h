@@ -31,7 +31,7 @@ public:
         T* _ptr;
     };
 
-private:
+public:
     pool(){}
 
     ~pool()
@@ -42,13 +42,6 @@ private:
             idles.pop();
             delete it;
         }
-    }
-
-public:
-    static pool& instance()
-    {
-        static pool p;
-        return p;
     }
 
     template<typename... A>

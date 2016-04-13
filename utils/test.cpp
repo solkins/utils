@@ -1,4 +1,4 @@
-#include "svr_epoll.h"
+#include "svr_udp.h"
 #include <thread>
 #include <iostream>
 #include <string.h>
@@ -14,9 +14,19 @@ int svrproc(int fd, const char* req, int reqlen, char* resp, int respbuflen, uns
 
 int main(int argc, char* argv[])
 {
-    svr_epoll s;
+    svr_udp s;
     s.setport(10000);
     s.bind_server_cb(svrproc);
+    s.start();
+    s.stop();
+    s.start();
+    s.stop();
+    s.start();
+    s.stop();
+    s.start();
+    s.stop();
+    s.start();
+    s.stop();
     s.start();
     std::cout<<"server online"<<std::endl;
     while (1)
