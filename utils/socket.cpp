@@ -3,6 +3,7 @@
 #include <memory.h>
 
 #ifdef WIN32
+#include <WS2tcpip.h>
 class netenv
 {
 public:
@@ -144,16 +145,13 @@ int sys_sock::recv(void* buf, size_t len)
 bool sys_sock::joingroup(const char* groupip)
 {
     unsigned char ttl=255;
-    if (setsockopt(IPPROTO_IP, 10/*IP_MULTICAST_TTL*/, &ttl, sizeof(ttl)) == SOCKET_ERROR)
+    if (setsockopt(IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) == SOCKET_ERROR)
         return false;
 
-    struct ip_mreq {
-        struct in_addr imn_multiaddr;
-        struct in_addr imr_interface;
-    } areq;
-    areq.imn_multiaddr.s_addr = inet_addr(groupip);
-    areq.imr_interface.s_addr = htonl(INADDR_ANY);
-    if (setsockopt(IPPROTO_IP, 12/*IP_ADD_MEMBERSHIP*/, &areq, sizeof(areq)) == SOCKET_ERROR)
+    struct ip_mreq areq;
+    areq.imr_multiaddr.s_addr = inet_addr(groupip);
+    areq.imr_interface.s_addr = INADDR_ANY;
+    if (setsockopt(IPPROTO_IP, IP_ADD_MEMBERSHIP, &areq, sizeof(areq)) == SOCKET_ERROR)
         return false;
 
     return true;
