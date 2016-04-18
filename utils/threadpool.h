@@ -7,7 +7,6 @@
 #include <thread>
 #include <deque>
 #include "sysinfo.h"
-#include "singleton.h"
 
 class threadpool
 {
@@ -80,16 +79,5 @@ private:
     std::deque<std::thread> _threads;
     std::deque<Task> _tasks;
 };
-
-template<typename F, typename... A>
-static void threadpoolrun(F&& f, A&&... a)
-{
-    singleton<threadpool>::instance().run(f, a...);
-}
-
-static int threadpoolsize()
-{
-    return singleton<threadpool>::instance().size();
-}
 
 #endif	/* THREADPOOL_H */
