@@ -1,5 +1,5 @@
-#ifndef RINGQUEUE_H
-#define RINGQUEUE_H
+#ifndef RING_H
+#define RING_H
 
 template<class T>
 class ring
@@ -52,4 +52,4 @@ private:
     unsigned char head, tail;
 };
 
-#endif /* RINGQUEUE_H */
+#endif /* RING_H */
