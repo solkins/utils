@@ -1,10 +1,23 @@
 #ifndef AR_H
 #define AR_H
 
+#include <memory.h>
+#include <string.h>
+
 class ar
 {
 public:
     ar(void* buf):m_buf((char*)buf),m_in(0), m_out(0) {}
+
+    int readlen() const
+    {
+        return m_out;
+    }
+
+    int writelen() const
+    {
+        return m_in;
+    }
 
     ar& read(void* data, int len)
     {
