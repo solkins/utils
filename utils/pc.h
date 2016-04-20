@@ -31,7 +31,6 @@ public:
         return t;
     }
 
-
 private:
     std::mutex m_mutex;
     ring<T*> m_ring;
