@@ -2,10 +2,11 @@
 #define LOG_H
 
 #include <stdio.h>
-#include <stdarg.h>
+#include <fcntl.h>
 #ifdef  WIN32
 #include <windows.h>
 #else
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #endif
@@ -29,28 +30,20 @@ public:
 		sprintf(path, "/var/log/%s.log", pos);
 		name = path;
 #endif
-		out = fopen(name, "a+");
-    }
-
-	void print(char* fmt, ...)
-	{
-		va_list args;
-		va_start(args, fmt);
-		vfprintf(out, fmt, args);
-		va_end(args);
-	}
-
-    ~usr_log()
-    {
+		FILE* out = fopen(name, "a+");
+		orifd = dup(STDOUT_FILENO);
+		dup2(fileno(out), STDOUT_FILENO);
 		fclose(out);
     }
 
+    ~usr_log()
+    {
+		dup2(orifd, STDOUT_FILENO);
+		close(orifd);
+    }
+
 private:
-	FILE* out;
+	int orifd;
 };
-
-static usr_log g_usr_log;
-
-#define	LOG	g_usr_log.print
 
 #endif // LOG_H
