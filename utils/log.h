@@ -2,10 +2,11 @@
 #define LOG_H
 
 #include <stdio.h>
-#include <fcntl.h>
 #ifdef  WIN32
 #include <windows.h>
+#include <io.h>
 #else
+#include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,14 +32,14 @@ public:
 		name = path;
 #endif
 		FILE* out = fopen(name, "a+");
-		orifd = dup(STDOUT_FILENO);
-		dup2(fileno(out), STDOUT_FILENO);
+        orifd = dup(fileno(stdout));
+        dup2(fileno(out), fileno(stdout));
 		fclose(out);
     }
 
     ~usr_log()
     {
-		dup2(orifd, STDOUT_FILENO);
+        dup2(orifd, fileno(stdout));
 		close(orifd);
     }
 
